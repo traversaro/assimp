@@ -35,7 +35,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #----------------------------------------------------------------------
 SET(CMAKE_LEGACY_CYGWIN_WIN32 0) # Remove when CMake >= 2.8.4 is required
-CMAKE_MINIMUM_REQUIRED( VERSION 2.8 )
+CMAKE_MINIMUM_REQUIRED( VERSION 2.8.7 )
 PROJECT( Assimp )
 
 # All supported options ###############################################
@@ -289,9 +289,10 @@ IF (NOT TARGET uninstall)
 ENDIF()
 
 # cmake configuration files
+set(CMAKE_CONF_INSTALLATION_DIR "${ASSIMP_LIB_INSTALL_DIR}/cmake/assimp-${ASSIMP_VERSION_MAJOR}.${ASSIMP_VERSION_MINOR}")
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/assimp-config.cmake.in"         "${CMAKE_CURRENT_BINARY_DIR}/assimp-config.cmake" @ONLY IMMEDIATE)
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/assimp-config-version.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/assimp-config-version.cmake" @ONLY IMMEDIATE)
-INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/assimp-config.cmake"             "${CMAKE_CURRENT_BINARY_DIR}/assimp-config-version.cmake" DESTINATION "${ASSIMP_LIB_INSTALL_DIR}/cmake/assimp-${ASSIMP_VERSION_MAJOR}.${ASSIMP_VERSION_MINOR}" COMPONENT ${LIBASSIMP-DEV_COMPONENT})
+INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/assimp-config.cmake"             "${CMAKE_CURRENT_BINARY_DIR}/assimp-config-version.cmake" DESTINATION ${CMAKE_CONF_INSTALLATION_DIR} COMPONENT ${LIBASSIMP-DEV_COMPONENT})
 
 FIND_PACKAGE( DirectX )
 
@@ -429,6 +430,25 @@ ENDIF ( ASSIMP_BUILD_TESTS )
 # Generate a pkg-config .pc for the Assimp library.
 CONFIGURE_FILE( "${PROJECT_SOURCE_DIR}/assimp.pc.in" "${PROJECT_BINARY_DIR}/assimp.pc" @ONLY )
 INSTALL( FILES "${PROJECT_BINARY_DIR}/assimp.pc" DESTINATION ${ASSIMP_LIB_INSTALL_DIR}/pkgconfig/ COMPONENT ${LIBASSIMP-DEV_COMPONENT})
+
+# Generate the cmake imported targets for the assimp library, that are included by assimp-config.cmake
+# See https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#imported-targets for more info
+
+# This is to find the imported targets in the build directory
+export(
+  TARGETS assimp
+  FILE assimp-targets.cmake
+  NAMESPACE ASSIMP::
+)
+
+# This is to find the imported targets in the installation directory
+INSTALL(
+  EXPORT AssimpTargets
+  FILE assimp-targets.cmake
+  NAMESPACE ASSIMP::
+  DESTINATION ${CMAKE_CONF_INSTALLATION_DIR}
+  COMPONENT ${LIBASSIMP-DEV_COMPONENT}
+)
 
 IF(CMAKE_CPACK_COMMAND AND UNIX AND ASSIMP_OPT_BUILD_PACKAGES)
   # Packing information
